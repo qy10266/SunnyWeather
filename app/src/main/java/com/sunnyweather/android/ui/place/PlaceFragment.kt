@@ -1,5 +1,6 @@
 package com.sunnyweather.android.ui.place
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,6 +12,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.sunnyweather.android.databinding.FragmentPlaceBinding
+import com.sunnyweather.android.ui.weather.WeatherActivity
 
 class PlaceFragment: Fragment() {
 
@@ -34,12 +36,23 @@ class PlaceFragment: Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val layoutManager = LinearLayoutManager(activity)
+        if (viewModel.isPlaceSaved()) {
+            val place = viewModel.getSavedPlace()
+            val intent = Intent(context,WeatherActivity::class.java).apply {
+                putExtra("location_lng",place.location.lng)
+                putExtra("location_lat",place.location.lat)
+                putExtra("place_name",place.name)
+            }
+            startActivity(intent)
+            activity?.finish()
+            return
+        }
         binding.recyclerView.layoutManager = layoutManager
         adapter = PlaceAdapter(this,viewModel.placeList)
         binding.recyclerView.adapter = adapter
         binding.searchPlaceEdit.addTextChangedListener { editable ->
             val content = editable.toString()
-            if (content.isEmpty()) {
+            if (content.isNotEmpty()) {
                 viewModel.searchPlaces(content)
             } else {
                 binding.recyclerView.visibility = View.GONE
@@ -61,6 +74,11 @@ class PlaceFragment: Fragment() {
                 result.exceptionOrNull()?.printStackTrace()
             }
         })
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
 }
